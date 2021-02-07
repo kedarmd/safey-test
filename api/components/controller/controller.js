@@ -152,7 +152,33 @@ async function getOrderDetailsById(order_id) {
     return response;
 }
 
+async function getOrdersByProductId(product_id) {
+    const orders = Orders.find({ product_ids: product_id }).select({
+        _id: 0,
+        __v: 0,
+    });
+    return orders;
+}
+
+async function getOrderDetailsByProductId(product_id) {
+    const orders = await getOrdersByProductId(product_id);
+    const order_ids = orders.length
+        ? orders.map((order) => order.order_id)
+        : [];
+
+    const queries = order_ids.length
+        ? order_ids.map((order_id) => {
+              return getOrderDetailsById(order_id);
+          })
+        : [];
+
+    const response = await Promise.all(queries);
+
+    return response;
+}
+
 module.exports = {
     storeOrder,
     getOrderDetailsById,
+    getOrderDetailsByProductId,
 };

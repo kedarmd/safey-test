@@ -36,9 +36,18 @@ router.route('/order/:order_id').get(async (req, res) => {
     }
 });
 
-router.route('/order/:product_id').get((req, res) => {
-    const product_id = req.params.product_id;
-    res.send(`Get.........${product_id}`);
+router.route('/orderbyproductid/:product_id').get(async (req, res) => {
+    try {
+        const product_id = req.params.product_id;
+        console.log(product_id);
+        const response = await controller.getOrderDetailsByProductId(
+            product_id
+        );
+        res.status(200).send({ data: response });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({ err: error.message });
+    }
 });
 
 module.exports = router;
