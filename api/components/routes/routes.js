@@ -24,9 +24,16 @@ router.route('/order').post(async (req, res) => {
     }
 });
 
-router.route('/order/:order_id').get((req, res) => {
-    const user_id = req.params.order_id;
-    res.send(`Get.........${user_id}`);
+router.route('/order/:order_id').get(async (req, res) => {
+    try {
+        const order_id = req.params.order_id;
+        console.log(order_id);
+        const response = await controller.getOrderDetailsById(order_id);
+        res.status(200).send({ data: response });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({ err: error.message });
+    }
 });
 
 router.route('/order/:product_id').get((req, res) => {

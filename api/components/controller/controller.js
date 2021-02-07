@@ -92,6 +92,67 @@ async function storeOrder(reqparams) {
     return response;
 }
 
+async function getBillingDetailsByOrderId(order_id) {
+    const billings = await Billings.findOne({ order_id: order_id });
+    if (billings === null) {
+        const error = new Error(
+            `Billing details for order_id: ${order_id} not found.`
+        );
+        error.code = 404;
+        throw error;
+    }
+    return billings;
+}
+
+async function getShippingDetailsByOrderId(order_id) {
+    const shippings = await Shippings.findOne({ order_id: order_id });
+    if (shippings === null) {
+        const error = new Error(
+            `Shipping details for order_id: ${order_id} not found.`
+        );
+        error.code = 404;
+        throw error;
+    }
+    return shippings;
+}
+
+async function getOrderById(order_id) {
+    const order = await Orders.findOne({ order_id: order_id }).select({
+        _id: 0,
+    });
+    if (order === null) {
+        const error = new Error(`order for order_id: ${order_id} not found.`);
+        error.code = 404;
+        throw error;
+    }
+
+    return order;
+}
+
+async function getOrderDetailsById(order_id) {
+    const addressQueries = [
+        getOrderById(order_id),
+        getBillingDetailsByOrderId(order_id),
+        getShippingDetailsByOrderId(order_id),
+    ];
+    const [
+        order_details,
+        billing_details,
+        shipping_details,
+    ] = await Promise.all(addressQueries);
+
+    const response = {
+        order_id: _.get(order_details, 'order_id', ''),
+        product_ids: _.get(order_details, 'product_ids', []),
+        total: _.get(billing_details, 'total', 0),
+        billing_address: _.get(billing_details, 'billing_address', ''),
+        shipping_address: _.get(shipping_details, 'shipping_address', ''),
+        order_date: _.get(order_details, 'order_date', ''),
+    };
+    return response;
+}
+
 module.exports = {
     storeOrder,
+    getOrderDetailsById,
 };
