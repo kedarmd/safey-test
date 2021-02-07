@@ -27,7 +27,6 @@ router.route('/order').post(async (req, res) => {
 router.route('/order/:order_id').get(async (req, res) => {
     try {
         const order_id = req.params.order_id;
-        console.log(order_id);
         const response = await controller.getOrderDetailsById(order_id);
         res.status(200).send({ data: response });
     } catch (error) {
@@ -39,7 +38,6 @@ router.route('/order/:order_id').get(async (req, res) => {
 router.route('/orderbyproductid/:product_id').get(async (req, res) => {
     try {
         const product_id = req.params.product_id;
-        console.log(product_id);
         const response = await controller.getOrderDetailsByProductId(
             product_id
         );
@@ -47,6 +45,19 @@ router.route('/orderbyproductid/:product_id').get(async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).send({ err: error.message });
+    }
+});
+
+router.route('/createdelivery/:order_id').post(async (req, res) => {
+    try {
+        const order_id = req.params.order_id;
+        const response = await controller.createDelivery(order_id);
+        const code = _.get(response, 'code', 500);
+        res.status(code).send({ data: response });
+    } catch (error) {
+        console.log(error);
+        const code = _.get(error, 'code', 500);
+        res.status(code).send({ err: error.message });
     }
 });
 

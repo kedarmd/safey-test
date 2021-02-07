@@ -1,6 +1,12 @@
 const uuid = require('uuid');
 const _ = require('lodash');
-const { Products, Orders, Shippings, Billings } = require('../models/model');
+const {
+    Products,
+    Orders,
+    Shippings,
+    Billings,
+    Delivery,
+} = require('../models/model');
 
 async function doesProductExist(product_id) {
     const product = await Products.findOne({ product_id: product_id }).select({
@@ -168,17 +174,69 @@ async function getOrderDetailsByProductId(product_id) {
 
     const queries = order_ids.length
         ? order_ids.map((order_id) => {
-              return getOrderDetailsById(order_id);
-          })
+            return getOrderDetailsById(order_id);
+        })
         : [];
 
     const response = await Promise.all(queries);
-
     return response;
+}
+
+function generateDeliveryDate(order_date) {
+    let date = new Date(order_date);
+    date.setDate(date.getDate() + 1);
+    while ((date.getDate() - 1) % 5 !== 0) {
+        date.setDate(date.getDate() + 1);
+    }
+    return date.toJSON();
+}
+
+async function createDelivery(order_id) {
+    return new Promise(resolve => {
+        getOrderDetailsById(order_id)
+            .then(order => {
+                order.delivery_date = generateDeliveryDate(order.order_date);
+                const query = order;
+                const DeliveryValue = new Delivery(query);
+                DeliveryValue.save((error, record) => {
+                    if (error && error.code === 11000) {
+                        resolve({
+                            error: `Delivery for order_id ${order_id} has already been created.`,
+                            code: 409
+                        })
+                    } else if (error) {
+                        resolve({
+                            error: error,
+                            code: 400
+                        })
+                    } else {
+                        record = JSON.stringify(record);
+                        record = JSON.parse(record);
+                        delete record.__v;
+                        resolve({
+                            message: "delivery created successfully!!!",
+                            ...record
+                        })
+                    }
+                })
+            })
+            .catch(error => {
+                console.log(error);
+                resolve({ error: "Internal server error", code: error.code })
+            });
+    })
+
 }
 
 module.exports = {
     storeOrder,
     getOrderDetailsById,
     getOrderDetailsByProductId,
+    createDelivery: (order_id) => {
+        return new Promise((resolve) => {
+            createDelivery(order_id).then((result) => {
+                resolve(result);
+            });
+        });
+    },
 };
