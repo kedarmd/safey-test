@@ -185,10 +185,10 @@ async function getOrderDetailsByProductId(product_id) {
 function generateDeliveryDate(order_date) {
     let date = new Date(order_date);
     date.setDate(date.getDate() + 1);
-    while ((date.getDate() - 1) % 5 !== 0) {
+    while ((date.getDate()) % 5 !== 0) {
         date.setDate(date.getDate() + 1);
     }
-    return date.toJSON();
+    return date;
 }
 
 async function createDelivery(order_id) {
